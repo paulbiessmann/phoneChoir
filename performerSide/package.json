@@ -1,0 +1,20 @@
+{
+  "name": "osc_web_bridge",
+  "version": "1.0.0",
+  "description": "Redirecting messages from the web to an OSC device.",
+  "main": "bridge.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "OSC",
+    "web",
+    "bridge"
+  ],
+  "author": "Paul Biessmann",
+  "license": "ISC",
+  "dependencies": {
+    "node-osc": "^5.2.2",
+    "socket.io": "^4.0.0"
+  }
+}
