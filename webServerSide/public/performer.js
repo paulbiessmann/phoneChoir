@@ -82,21 +82,25 @@ function setup() {
 
     socketOsc.on('message',
       function(msg) {
-        if(msg.includes("/pixelValIn")){
-          pixelVal = parseFloat(msg[1]);
-          socket.emit('pixelVal', pixelVal);
-          // console.log("msg " + msg[1]);
-          // console.log("split " + pixelVal);
-        }
-        if(msg.includes("/synth")){
-          freq = parseFloat(msg[1]);
-          vel = parseFloat(msg[2]);
-          socket.emit('synth', msg);
 
-        }
-        if(msg.includes("/filter")){
+        //console.log("msg ", msg);
+        socket.emit('message', msg);
 
-        }
+        // if(msg.includes("/pixelValIn")){
+        //   pixelVal = parseFloat(msg[1]);
+        //   socket.emit('pixelVal', pixelVal);
+        //   // console.log("msg " + msg[1]);
+        //   // console.log("split " + pixelVal);
+        // }
+        // if(msg.includes("/synth")){
+        //   freq = parseFloat(msg[1]);
+        //   vel = parseFloat(msg[2]);
+        //   socket.emit('synth', msg);
+        //
+        // }
+        // if(msg.includes("/filter")){
+        //
+        // }
       }
     );
 

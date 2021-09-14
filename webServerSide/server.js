@@ -37,14 +37,6 @@ app.use(express.static('public'));
 // WebSockets work with the HTTP server
 var io = require('socket.io')(server);
 
-// // -----
-// app.get('/p/:tagId', function(req, res) {
-  //res.send("tagId is set to " + req.params.tagId);
-// });
-// GET /p/5
-// tagId is set to 5
-// // ------
-
 // Register a callback function to run when we have an individual connection
 // This is run for each individual user that connects
 io.sockets.on('connection',
@@ -63,17 +55,22 @@ io.sockets.on('connection',
       }
     });
 
-    socket.on('pixelVal', function(pixelValIn){
-          socket.broadcast.to('roomPhone').emit('pixelVal', pixelValIn);
-          console.log("pixVal " + pixelValIn);
-    });
+    // socket.on('pixelVal', function(pixelValIn){
+    //       socket.broadcast.to('roomPhone').emit('pixelVal', pixelValIn);
+    //       console.log("pixVal " + pixelValIn);
+    // });
+    //
+    // socket.broadcast.to('roomPhone').emit('time', Date.now());
+    // console.log(Date.now());
+    //
+    // socket.on('synth', function(synth){
+    //   console.log("synth" + synth);
+    //   socket.broadcast.to('roomPhone').emit('synth', synth);
+    // });
 
-    socket.broadcast.to('roomPhone').emit('time', Date.now());
-    console.log(Date.now());
-
-    socket.on('synth', function(synth){
-      console.log("synth" + synth);
-      socket.broadcast.to('roomPhone').emit('synth', synth);
+    socket.on('message', function(msg){
+      //console.log("msg "+ msg);
+      socket.broadcast.to('roomPhone').emit('message', msg);
     });
 
 
