@@ -1,5 +1,5 @@
-// Paul Biessmann - 30-March-2021
-// for oper.digital
+// Paul Biessmann - 14-Sept-2021
+// for Musem für Kommunikation Nürnberg
 let value = 0;
 let button;
 let mouseVal = 0;
@@ -11,6 +11,9 @@ let freq = 440;
 let volume = 0.0;
 var pixelVal = 0.2;
 var pixelValRcv = 0.1;
+let id = 0;
+var time = 0;
+var voiceID = 0;
 
 const lfo = new LFO(0, 1, 200);
 
@@ -32,15 +35,24 @@ function setup() {
     console.log("pixel" + pixelVal);
   });
 
-  socket.on('freq',  function(msg){
-    freq = msg[1];
-    volume = msg[2];
-    osc.amp(volume/127,0.1);
-    osc.freq(freq,0.1);
+  socket.on('time', function(timeRcv){
+    time = timeRcv;
+  })
+
+  let params = getURLParams();
+  id = params.id;
+  voiceID = id%5;
+
+  socket.on('synth',  function(msg){
+    voiceNum = msg[1];
+
+    if (voiceNum == voiceID){
+      freq = midiToFreq(msg[2]);
+      volume = msg[3];
+      osc.amp(volume/127,0.1);
+      osc.freq(freq,0.1);
+    }
   });
-
-
-
 
 
 }
@@ -48,22 +60,25 @@ function setup() {
 
 function draw() {
 
+    var lauf = sin(millis()/500 + id * 1 );
+    var brightness = sin(pixelVal * 10 + id * 1);
 
-    background(pixelVal*255, pixelVal*255, 0);
+    background(brightness*255, brightness*255, brightness*255);
 
     //background(pixelVal*255*sin(lfo))
 
     // display variables
-    fill(0);
-
-    textSize(48);
+    // fill(0);
     fill(255,0,0);
-    text("Phone!!", 25, 200);
+    text("ID: " + id, 10, 10);
+    text("voiceID: " + voiceID, 10, 20);
+    // text("time " + millis(), 10, 25);
+    // textSize(48);
+    // fill(255,0,0);
+    // text("Phone!!", 25, 200);
+    // textSize(15);
+    // text("PixelVal "  + pixelVal, 15, 250);
 
-    // Send that object to the socket
-    // if (value > 5){
-    //  socket.emit('applause',value);
-    // }
 
     //LFO
     // const n = lfo.run();
@@ -74,8 +89,6 @@ function draw() {
       value = value - 5;
     }
 
-    textSize(15);
-    text("PixelVal "  + pixelVal, 15, 250);
 
 
     if(value > 200 && playSound == false){

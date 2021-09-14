@@ -16,7 +16,7 @@ var numPhones = 0;
 var activeClients = 0;
 var pixelVal = 0;
 var pixelValRcv = 0;
-var freq = 440;
+var synth = 0;
 
 // Set up the server
 // process.env.PORT is related to deploying on heroku
@@ -38,9 +38,9 @@ app.use(express.static('public'));
 var io = require('socket.io')(server);
 
 // // -----
-app.get('/p/:tagId', function(req, res) {
-  res.send("tagId is set to " + req.params.tagId);
-});
+// app.get('/p/:tagId', function(req, res) {
+  //res.send("tagId is set to " + req.params.tagId);
+// });
 // GET /p/5
 // tagId is set to 5
 // // ------
@@ -63,21 +63,24 @@ io.sockets.on('connection',
       }
     });
 
-    socket.on('pixelVal', function(pixelVal){
-          socket.broadcast.to('roomPhone').emit('pixelVal', pixelVal);
-          //console.log("pixVal " + pixelVal);
+    socket.on('pixelVal', function(pixelValIn){
+          socket.broadcast.to('roomPhone').emit('pixelVal', pixelValIn);
+          console.log("pixVal " + pixelValIn);
     });
 
-    socket.on('freq', function(freq){
-      console.log("freq" + freq);
-          socket.broadcast.to('roomPhone').emit('freq', freq);
+    socket.broadcast.to('roomPhone').emit('time', Date.now());
+    console.log(Date.now());
+
+    socket.on('synth', function(synth){
+      console.log("synth" + synth);
+      socket.broadcast.to('roomPhone').emit('synth', synth);
     });
 
 
     // When this user emits, client side: socket.emit('otherevent',some data);
     socket.on('applause', function(value) {
 
-      var pixelValIn = pixelVal;
+      var pixelVal = pixelValIn;
         // Send it to all other clients
         //socket.broadcast.emit('applauseRcv', mean);
         socket.broadcast.to('roomPhones').emit('pixelVal', pixelVal);

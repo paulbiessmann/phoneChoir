@@ -88,10 +88,13 @@ function setup() {
           // console.log("msg " + msg[1]);
           // console.log("split " + pixelVal);
         }
-        if(msg.includes("/freq")){
+        if(msg.includes("/synth")){
           freq = parseFloat(msg[1]);
           vel = parseFloat(msg[2]);
-          socket.emit('freq', msg);
+          socket.emit('synth', msg);
+
+        }
+        if(msg.includes("/filter")){
 
         }
       }
