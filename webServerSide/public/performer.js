@@ -23,7 +23,6 @@ var msg;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  //osc = new p5.Oscillator('sawtooth');
 
   // connect to webserver, get audience data:
   let url = 'http://192.168.0.100:3000';
@@ -36,12 +35,6 @@ function setup() {
   // say "I'm a performer"
   socket.emit('performer', 1);
 
-  // socket.on('pixelVal',
-  //   function(valueRcv) {
-  //     console.log("Got: " + valueRcv);
-  //     value = valueRcv;
-  //   }
-  // );
 
   socket.on('numClientsRcv',
     function(numClientsRcv) {
@@ -52,14 +45,6 @@ function setup() {
    }
   );
 
-  socket.on('activeClientsRcv',
-    function(activeClientsRcv) {
-      activeClients = activeClientsRcv;
-      if(activeClients > maxActive){
-        maxActive = activeClients;
-      }
-   }
-  );
 
   // connect to local OSC server on the performer machines:
   socketOsc = io.connect('http://localhost:8081');
@@ -83,24 +68,8 @@ function setup() {
     socketOsc.on('message',
       function(msg) {
 
-        //console.log("msg ", msg);
         socket.emit('message', msg);
 
-        // if(msg.includes("/pixelValIn")){
-        //   pixelVal = parseFloat(msg[1]);
-        //   socket.emit('pixelVal', pixelVal);
-        //   // console.log("msg " + msg[1]);
-        //   // console.log("split " + pixelVal);
-        // }
-        // if(msg.includes("/synth")){
-        //   freq = parseFloat(msg[1]);
-        //   vel = parseFloat(msg[2]);
-        //   socket.emit('synth', msg);
-        //
-        // }
-        // if(msg.includes("/filter")){
-        //
-        // }
       }
     );
 
@@ -109,7 +78,6 @@ function setup() {
     input.position(15, 110);
     input.size(50);
     let portButton = createButton("change OSC port");
-    //portButton.style("font-size", "20px");
     portButton.position(70, 110);
 
     portButton.mousePressed(changeUdpPort);
@@ -164,8 +132,8 @@ function draw() {
     text("Performer", 15, 50);
     text("udp port: " + port, 15, 80 );
     textSize(20);
-    text("clients:         " + numClients + "            active: " + activeClients, 15, 390);
-    text("maxClients: " + maxClients + "      maxActive: " + maxActive, 15, 410);
+    text("clients:         " + numClients + "            active: " + activeClients, 15, 200);
+    text("maxClients: " + maxClients + "      maxActive: " + maxActive, 15, 230);
     textSize(20);
 
 }

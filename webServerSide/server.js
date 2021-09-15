@@ -50,22 +50,22 @@ io.sockets.on('connection',
       if (newPhone == 1){
           socket.room = 'roomPhone';
           socket.join('roomPhone');
-          console.log(socket.id + " added to " + socket.room );
           numPhones++;
+          console.log(socket.id + " added to " + socket.room + ", NumPhones: " + numPhones );
       }
     });
 
-    // socket.on('pixelVal', function(pixelValIn){
-    //       socket.broadcast.to('roomPhone').emit('pixelVal', pixelValIn);
-    //       console.log("pixVal " + pixelValIn);
-    // });
-    //
-    // socket.broadcast.to('roomPhone').emit('time', Date.now());
-    // console.log(Date.now());
-    //
-    // socket.on('synth', function(synth){
-    //   console.log("synth" + synth);
-    //   socket.broadcast.to('roomPhone').emit('synth', synth);
+   numClients = Object.keys(io.sockets.sockets).length;
+   console.log("NumClients ", numClients);
+
+
+    // socket.on('performer', function(newPerformer){
+    //   if (newPerformer == 1){
+    //       socket.room = 'roomPerformer';
+    //       socket.join('roomPerformer');
+    //       numPerformer++;
+    //       console.log(socket.id + " added to " + socket.room + ", Performer: " + numPerformer);
+    //   }
     // });
 
     socket.on('message', function(msg){
@@ -73,22 +73,10 @@ io.sockets.on('connection',
       socket.broadcast.to('roomPhone').emit('message', msg);
     });
 
-
-    // When this user emits, client side: socket.emit('otherevent',some data);
-    socket.on('applause', function(value) {
-
-      var pixelVal = pixelValIn;
-        // Send it to all other clients
-        //socket.broadcast.emit('applauseRcv', mean);
-        socket.broadcast.to('roomPhones').emit('pixelVal', pixelVal);
-        socket.broadcast.to('roomPerformer').emit('numClientsRcv', numClients);
-        socket.broadcast.to('roomPerformer').emit('activeClientsRcv', activeClients);
+    // Broadcast the phoneNum to performer:
+    socket.broadcast.to('roomPerformer').emit('numClientsRcv', numClients);
 
 
-        // This is a way to send to everyone including sender
-        // io.sockets.emit('message', "this goes to everyone");
-      }
-    );
 
     socket.on('disconnect', function() {
         console.log("Client has disconnected");
@@ -97,6 +85,10 @@ io.sockets.on('connection',
         if (socket.room == 'roomPerformer'){
             numPerformer--;
         }
+        if (socket.room == 'roomPhones'){
+            numPhones--;
+        }
+        console.log("NumClients ", Object.keys(io.sockets.sockets).length);
     });
 
   }

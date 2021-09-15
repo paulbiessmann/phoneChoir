@@ -12,14 +12,17 @@ let volume = 0.0;
 var pixelVal = 0.2;
 var pixelValRcv = 0.1;
 let id = 0;
-var time = 0;
+var time = 0, timeStamp = 0;
 var voiceID = 0;
 var msg;
 let filter;
 var filterFreq = 1000;
 var filterFreqNew = 1000;
+var lfo1Freq = 0, lfo1Amnt = 0;
+var lfo2Freq = 0, lfo2Amnt = 0;
+var lauf = 0, brightness;
 
-const lfo = new LFO(0, 1, 200);
+// const lfo = new LFO(0, 1, 200);
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -35,10 +38,18 @@ function setup() {
 
   osc = new p5.Oscillator('sawtooth');
   filter = new p5.LowPass;
+  lfo1 = new p5.Oscillator();
+  lfo2 = new p5.Oscillator();
+
+  lfo1.disconnect();
+  lfo2.disconnect();
   osc.disconnect();
   osc.connect(filter);
+
   filter.freq(filterFreq);
   filter.res(5);
+
+
 
   //noise = new p5.Noise();
 
@@ -53,10 +64,6 @@ function setup() {
 // - Anordnung der Phones quadratisch? Vll in drei Reihen besser.. 3x8
 
 
-  // socket.on('pixelVal', function(pixelValRcv){
-  //   pixelVal = pixelValRcv;
-  //   //console.log("pixel" + pixelVal);
-  // });
 
   socket.on('message', function(msg) {
 
@@ -64,8 +71,6 @@ function setup() {
 
     if(msg.includes("/pixelValIn")){
       pixelVal = parseFloat(msg[1]);
-
-
     }
     if(msg.includes("/synth")){
       voiceNum = msg[1];
@@ -73,51 +78,54 @@ function setup() {
       if (voiceNum == voiceID){
         freq = midiToFreq(msg[2]);
         volume = msg[3];
+        lfo1.start();
+        lfo2.start();
       }
 
     }
     if(msg.includes("/filterFreq")){
       filterFreqNew = map(msg[1], 0, 1, 100, 5000);
     }
+    if(msg.includes("/lfo1")){
+      lfo1Freq = map(msg[1], 0, 1, 0, 20);
+      lfo1Amnt = map(msg[2], 0, 1, 0, 10);
+      lfo1.freq(lfo1Freq, 0.01);
+      lfo1.amp(lfo1Amnt, 0.01);
+    }
+    if(msg.includes("/lfo2")){
+      lfo2Freq = map(msg[1], 0, 1, 0, 50);
+      lfo2Amnt = map(msg[2], 0, 1, 0, 500);
+      lfo2.freq(lfo2Freq, 0.01);
+      lfo2.amp(lfo2Amnt, 0.01);
+    }
+    if(msg.includes("/reset")){
+      timeStamp = millis();
+      lauf = 0;
+    }
+
   });
-
-
-  socket.on('time', function(timeRcv){
-    time = timeRcv;
-  })
-
-
-  //
-  // socket.on('synth',  function(msg){
-  //   voiceNum = msg[1];
-  //
-  //   if (voiceNum == voiceID){
-  //     freq = midiToFreq(msg[2]);
-  //     volume = msg[3];
-  //     osc.amp(volume/127,0.1);
-  //     osc.freq(freq,0.1);
-  //   }
-  // });
 
 
 }
 
 
 function draw() {
-
-    var lauf = sin(millis()/500 + id * 1 );
-    var brightness = sin(pixelVal * 10 + id * 1);
-
-    background(brightness*255, brightness*255, brightness*255);
+    // Timing
+    time = millis() - timeStamp;
 
     //background(pixelVal*255*sin(lfo))
+    brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
+    background(brightness*255, brightness*255, brightness*255);
+
 
     // display variables
     // fill(0);
     fill(255,0,0);
     text("ID: " + id, 10, 10);
     text("voiceID: " + voiceID, 10, 20);
-    // text("time " + millis(), 10, 25);
+    text("time " + time, 10, 35);
+    text("second " + second(), 10, 50);
+
     // textSize(48);
     // fill(255,0,0);
     // text("Phone!!", 25, 200);
@@ -131,15 +139,29 @@ function draw() {
     filterFreq = leaky(filterFreq, filterFreqNew, 0.82);
     filterFreq = constrain(filterFreq, 0, 22050);
     filter.freq(filterFreq);
-    console.log("filterFreq " + filterFreq);
+    filter.freq(lfo2);
+  //console.log("filterFreq " + filterFreq);
 
     osc.amp(volume/127,0.1);
-    osc.freq(freq,0.1);
+    osc.freq(freq, 0.01);
+    osc.freq(lfo1);
 
     //LFO
     // const n = lfo.run();
     // fill(255,0,0);
-    // text(n, 25, 25);
+    // text(n, 10, 40);
+
+    //
+    // lauf += lfo1Freq;
+    // if (lauf > windowHeight){
+    //   lauf = -windowHeight;
+    // }
+
+    lauf = abs(sin(time/(1000*lfo1Amnt+1) + id * lfo1Freq)); //+ id / 9
+
+    fill(0, 0,  255);
+    rect(windowWidth/2 - 50, lauf, 100, windowHeight  );
+
 
     if (value > 5){
       value = value - 5;
