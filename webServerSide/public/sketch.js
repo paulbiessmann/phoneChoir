@@ -9,10 +9,10 @@ let permissionGranted = false;
 let playSound = false;
 let freq = 440;
 let volume = 0.0;
-var pixelVal = 0.2;
-var pixelValRcv = 0.1;
+var pixelVal = 0.0;
+var pixelValRcv = 0.0;
 let id = 0;
-var time = 0, timeStamp = 0;
+var time = 0, timeStamp = 0, gMillis = 0;
 var voiceID = 0;
 var msg;
 let filter;
@@ -21,6 +21,7 @@ var filterFreqNew = 1000;
 var lfo1Freq = 0, lfo1Amnt = 0;
 var lfo2Freq = 0, lfo2Amnt = 0;
 var lauf = 0, brightness;
+let fft;
 
 // const lfo = new LFO(0, 1, 200);
 
@@ -40,6 +41,7 @@ function setup() {
   filter = new p5.LowPass;
   lfo1 = new p5.Oscillator();
   lfo2 = new p5.Oscillator();
+  fft = new p5.FFT();
 
   lfo1.disconnect();
   lfo2.disconnect();
@@ -99,8 +101,10 @@ function setup() {
       lfo2.amp(lfo2Amnt, 0.01);
     }
     if(msg.includes("/reset")){
+      //setup();
       timeStamp = millis();
       lauf = 0;
+
     }
 
   });
@@ -112,10 +116,13 @@ function setup() {
 function draw() {
     // Timing
     time = millis() - timeStamp;
+    //gMillis = time - second() * 1000;
 
     //background(pixelVal*255*sin(lfo))
-    brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
-    background(brightness*255, brightness*255, brightness*255);
+    //brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
+    brightness =sin(time * 0.1 * pixelVal + (id-3) / 3);
+    //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
+    background(brightness*255, pixelVal*255, pixelVal*255);
 
 
     // display variables
@@ -125,6 +132,9 @@ function draw() {
     text("voiceID: " + voiceID, 10, 20);
     text("time " + time, 10, 35);
     text("second " + second(), 10, 50);
+    //text("osc " + osc.getAmp(), 10, 70);
+    text("windowHeight " + windowHeight, 10, 70);
+    text("windowWidth " + windowWidth, 10, 90);
 
     // textSize(48);
     // fill(255,0,0);
@@ -137,7 +147,7 @@ function draw() {
 // Sound
     // lerp(filterFreq, 0.0005);
     filterFreq = leaky(filterFreq, filterFreqNew, 0.82);
-    filterFreq = constrain(filterFreq, 0, 22050);
+    filterFreq = constrain(filterFreq, 20, 22050);
     filter.freq(filterFreq);
     filter.freq(lfo2);
   //console.log("filterFreq " + filterFreq);
@@ -151,17 +161,32 @@ function draw() {
     // fill(255,0,0);
     // text(n, 10, 40);
 
-    //
-    // lauf += lfo1Freq;
+
+// Draw stuff:
+
+    // lauf += (lfo1Freq * id);
     // if (lauf > windowHeight){
     //   lauf = -windowHeight;
     // }
 
-    lauf = abs(sin(time/(1000*lfo1Amnt+1) + id * lfo1Freq)); //+ id / 9
-
+    lauf = sin(time/1000 + id * lfo1Freq) * windowHeight; //+ id / 9
     fill(0, 0,  255);
-    rect(windowWidth/2 - 50, lauf, 100, windowHeight  );
+    //rect(windowWidth/2 - 50, lauf, 100, windowHeight  );
 
+
+    let waveform = fft.waveform();
+    // fill(0,0,255);
+    noFill();
+    beginShape();
+    stroke(0,0,255);
+    strokeWeight(6);
+    for (let i = 0; i < waveform.length; i++){
+      let y = map(i, 0, waveform.length, 0, height);
+      let x = map( waveform[i], -1, 1, 0, width);
+      vertex(x,y);
+    }
+    endShape();
+    noStroke();
 
     if (value > 5){
       value = value - 5;
