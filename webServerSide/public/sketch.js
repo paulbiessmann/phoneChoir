@@ -11,7 +11,8 @@ let freq = 440;
 let volume = 0.0;
 var pixelVal = 0.0;
 var pixelValRcv = 0.0;
-let id = 0;
+let id = 0, idX = 0, idY = 0;
+let visSize = 3;
 var time = 0, timeStamp = 0, gMillis = 0;
 var voiceID = 0;
 var msg;
@@ -26,16 +27,20 @@ let fft;
 // const lfo = new LFO(0, 1, 200);
 
 function setup() {
+
   createCanvas(windowWidth, windowHeight);
-  // let url = 'https://oper.digital';
+  let url = 'http://192.168.0.100:3000';
   // console.log("connecting",url);
   // socket = io.connect(url, {path: "/applause/socket.io"});
-  socket = io.connect('http://192.168.0.100:3000');
+  //socket = io({transports: ['websocket'], upgrade: false});
+  socket = io.connect(url);
   // socket = io.connect('http://127.0.0.1:3000');
 
   let params = getURLParams();
   id = params.id;
   voiceID = ((id-1)%4)+1;
+  idX = ((id - 4) % visSize) +1;
+  idY = ceil((id - 3) / visSize);
 
   osc = new p5.Oscillator('sawtooth');
   filter = new p5.LowPass;
@@ -52,7 +57,6 @@ function setup() {
   filter.res(5);
 
 
-
   //noise = new p5.Noise();
 
 
@@ -61,10 +65,8 @@ function setup() {
 
 
 // // TODO:
-// - Reset call for timing, LFOs, Freqs, Eff, Visuals
-// - Speed of LFO for visuals and Sound
 // - Anordnung der Phones quadratisch? Vll in drei Reihen besser.. 3x8
-
+// - Start in Fullscreen
 
 
   socket.on('message', function(msg) {
@@ -101,13 +103,25 @@ function setup() {
       lfo2.amp(lfo2Amnt, 0.01);
     }
     if(msg.includes("/reset")){
-      //setup();
       timeStamp = millis();
       lauf = 0;
+    }
+    if(msg.includes("/refreshPhone")){
+      // setup();
+      // console.log("reload " + id);
+      // socket.emit('reload', id);
+          //socket.connect(url);
+
+        location.reload();
+      //socket.disconnect();
+    //  socket.connect(url);
+      //setup();
 
     }
 
   });
+
+  mousePressed();
 
 
 }
@@ -120,9 +134,55 @@ function draw() {
 
     //background(pixelVal*255*sin(lfo))
     //brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
-    brightness =sin(time * 0.1 * pixelVal + (id-3) / 3);
-    //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
-    background(brightness*255, pixelVal*255, pixelVal*255);
+
+    let visual = 1;
+
+
+
+
+    switch(visual){
+
+      case 1:
+        // Corner to corner:
+        brightness = sin(time * 0.05 * pixelVal + (id-3) / visSize);
+        //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
+        background(brightness*255, pixelVal*255, pixelVal*255);
+
+        break;
+      case 2:
+      // right to left:
+        brightness = cos(time * 0.05 * pixelVal + ((id-4) % visSize));
+        background(brightness*255, pixelVal*255, pixelVal*255);
+
+        break;
+      case 3:
+      // left to right:
+        brightness = cos(time * 0.05 * pixelVal + visSize - ((id-4) % visSize));
+        background(brightness*255, pixelVal*255, pixelVal*255);
+
+        break;
+
+      case 4:
+      // ring:
+        brightness = cos(time * 0.05 * pixelVal  * ((idX-2) + (idY-2)));
+
+        // lauflicht kreis?
+        //brightness = sin(time * 0.05 * pixelVal  * (idX-2) + (idY-2));
+        background(brightness*255, pixelVal*255, pixelVal*255);
+
+        break;
+
+      case 5:
+        // black:
+        brightness = 0.5;
+        //background(pixelVal*255 * brightness, pixelVal*255, pixelVal*255);
+        background(brightness*255, brightness*255, brightness*255);
+
+        break;
+
+    }
+
+
 
 
     // display variables
@@ -133,8 +193,12 @@ function draw() {
     text("time " + time, 10, 35);
     text("second " + second(), 10, 50);
     //text("osc " + osc.getAmp(), 10, 70);
-    text("windowHeight " + windowHeight, 10, 70);
-    text("windowWidth " + windowWidth, 10, 90);
+    // text("windowHeight " + windowHeight, 10, 70);
+    // text("windowWidth " + windowWidth, 10, 90);
+
+    text("idX " + idX, 10, 70);
+    text("idY " + idY, 10, 90);
+
 
     // textSize(48);
     // fill(255,0,0);
@@ -220,21 +284,14 @@ function LFO(min, max, step = 1) {
 }
 
 
-function deviceShaken() {
-  value = value + 4.5;
-  if (value > 255) {
-    value = 255;
-  }
-}
 
 function mousePressed() {
-  value = value + 200;
-  if (value >= 260) {
-    value = 260;
-  }
-  osc.start();
-  osc.amp(0.0);
-
+  // value = value + 200;
+  // if (value >= 260) {
+  //   value = 260;
+  // }
+  // osc.start();
+  // osc.amp(0.0);
 
   let fs = fullscreen();
   fullscreen(!fs);
@@ -248,7 +305,22 @@ function windowResized(){
 function leaky(oldVal, newVal, coeff){
 
   newVal = oldVal * (1-coeff) + newVal * coeff;
-
   return newVal;
 
 }
+
+// var elem = document.getElementsByTagName("body")[0];
+//
+// function openFullscreen() {
+//   if (elem.requestFullscreen) {
+//     elem.requestFullscreen();
+//   } else if (elem.mozRequestFullScreen) { /* Firefox */
+//     elem.mozRequestFullScreen();
+//   } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+//     elem.webkitRequestFullscreen();
+//   } else if (elem.msRequestFullscreen) { /* IE/Edge */
+//     elem.msRequestFullscreen();
+//   }
+// }
+//
+// openFullscreen();

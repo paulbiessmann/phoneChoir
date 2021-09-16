@@ -28,7 +28,7 @@ var server = app.listen(3000, "192.168.0.100");
 function listen() {
   var host = server.address().address;
   var port = server.address().port;
-  console.log('Example app listening at http://' + host + ':' + port);
+  console.log('PhoneChoir app listening at http://' + host + ':' + port);
 }
 
 app.use(express.static('public'));
@@ -67,6 +67,10 @@ io.sockets.on('connection',
     //       console.log(socket.id + " added to " + socket.room + ", Performer: " + numPerformer);
     //   }
     // });
+
+    socket.on('reload', function(id){
+      console.log("reload id " + id);
+    });
 
     socket.on('message', function(msg){
       //console.log("msg "+ msg);
