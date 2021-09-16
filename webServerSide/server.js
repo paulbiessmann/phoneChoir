@@ -51,7 +51,8 @@ io.sockets.on('connection',
           socket.room = 'roomPhone';
           socket.join('roomPhone');
           numPhones++;
-          console.log(socket.id + " added to " + socket.room + ", NumPhones: " + numPhones );
+          // console.log(socket.id + " added to " + socket.room + ", NumPhones: " + numPhones );
+          console.log(socket.id + " added to " + socket.room);
       }
     });
 

@@ -17,12 +17,14 @@ var time = 0, timeStamp = 0, gMillis = 0;
 var voiceID = 0;
 var msg;
 let filter;
-var filterFreq = 1000;
-var filterFreqNew = 1000;
+var filterFreq = 150;
+var filterFreqNew = 150;
 var lfo1Freq = 0, lfo1Amnt = 0;
 var lfo2Freq = 0, lfo2Amnt = 0;
 var lauf = 0, brightness;
 let fft;
+var scene = 0;
+var bDrawWave = true;
 
 // const lfo = new LFO(0, 1, 200);
 
@@ -55,7 +57,6 @@ function setup() {
 
   filter.freq(filterFreq);
   filter.res(5);
-
 
   //noise = new p5.Noise();
 
@@ -102,21 +103,15 @@ function setup() {
       lfo2.freq(lfo2Freq, 0.01);
       lfo2.amp(lfo2Amnt, 0.01);
     }
+    if(msg.includes("/scene")){
+      scene = msg[1];
+    }
     if(msg.includes("/reset")){
       timeStamp = millis();
       lauf = 0;
     }
     if(msg.includes("/refreshPhone")){
-      // setup();
-      // console.log("reload " + id);
-      // socket.emit('reload', id);
-          //socket.connect(url);
-
-        location.reload();
-      //socket.disconnect();
-    //  socket.connect(url);
-      //setup();
-
+      location.reload();
     }
 
   });
@@ -135,49 +130,48 @@ function draw() {
     //background(pixelVal*255*sin(lfo))
     //brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
 
-    let visual = 1;
-
-
-
+    let visual = scene;
+    bDrawWave = true;
 
     switch(visual){
+
+      case 0:
+        background(0);
+        bDrawWave = false;
+        break;
 
       case 1:
         // Corner to corner:
         brightness = sin(time * 0.05 * pixelVal + (id-3) / visSize);
         //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
         background(brightness*255, pixelVal*255, pixelVal*255);
-
         break;
+
       case 2:
       // right to left:
         brightness = cos(time * 0.05 * pixelVal + ((id-4) % visSize));
         background(brightness*255, pixelVal*255, pixelVal*255);
-
         break;
+
       case 3:
       // left to right:
         brightness = cos(time * 0.05 * pixelVal + visSize - ((id-4) % visSize));
         background(brightness*255, pixelVal*255, pixelVal*255);
-
         break;
 
       case 4:
       // ring:
         brightness = cos(time * 0.05 * pixelVal  * ((idX-2) + (idY-2)));
-
         // lauflicht kreis?
         //brightness = sin(time * 0.05 * pixelVal  * (idX-2) + (idY-2));
         background(brightness*255, pixelVal*255, pixelVal*255);
-
         break;
 
       case 5:
         // black:
-        brightness = 0.5;
-        //background(pixelVal*255 * brightness, pixelVal*255, pixelVal*255);
-        background(brightness*255, brightness*255, brightness*255);
-
+        brightness = 0.0;
+        background(pixelVal*255 , pixelVal*255, pixelVal*255);
+        //background(brightness*255, brightness*255, brightness*255);
         break;
 
     }
@@ -238,19 +232,21 @@ function draw() {
     //rect(windowWidth/2 - 50, lauf, 100, windowHeight  );
 
 
-    let waveform = fft.waveform();
-    // fill(0,0,255);
-    noFill();
-    beginShape();
-    stroke(0,0,255);
-    strokeWeight(6);
-    for (let i = 0; i < waveform.length; i++){
-      let y = map(i, 0, waveform.length, 0, height);
-      let x = map( waveform[i], -1, 1, 0, width);
-      vertex(x,y);
+    if (bDrawWave){
+        let waveform = fft.waveform();
+        // fill(0,0,255);
+        noFill();
+        beginShape();
+        stroke(0,0,255);
+        strokeWeight(6);
+        for (let i = 0; i < waveform.length; i++){
+          let y = map(i, 0, waveform.length, 0, height);
+          let x = map( waveform[i], -1, 1, 0, width);
+          vertex(x,y);
+        }
+        endShape();
+        noStroke();
     }
-    endShape();
-    noStroke();
 
     if (value > 5){
       value = value - 5;
@@ -286,12 +282,14 @@ function LFO(min, max, step = 1) {
 
 
 function mousePressed() {
-  // value = value + 200;
-  // if (value >= 260) {
-  //   value = 260;
-  // }
-  // osc.start();
-  // osc.amp(0.0);
+  value = value + 200;
+  if (value >= 260) {
+    value = 260;
+  }
+  osc.start();
+  osc.amp(0.0);
+  lfo1.start();
+  lfo2.start();
 
   let fs = fullscreen();
   fullscreen(!fs);
