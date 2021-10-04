@@ -25,8 +25,9 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 
   // connect to webserver, get audience data:
-  let url = 'http://192.168.0.100:3000';
-  // let url = 'http://127.0.0.1:3000';
+   let url = 'http://192.168.0.100:3000';
+  // let url = 'http://192.168.178.35:3000';
+  //let url = 'http://127.0.0.1:3000';
 
   // socket = io.connect(url, {path: "/applause/socket.io"});
   socket = io.connect(url);
