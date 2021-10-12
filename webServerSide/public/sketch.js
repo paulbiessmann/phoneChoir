@@ -12,7 +12,7 @@ let volume = 0.0;
 var pixelVal = 0.0;
 var pixelValRcv = 0.0;
 let id = 0, idX = 0, idY = 0;
-let visSize = 4;
+let visSize = 5;
 var time = 0, timeStamp = 0, gMillis = 0;
 var voiceID = 0;
 var msg;
@@ -31,7 +31,9 @@ var bDrawText = false;
 var angle = 0;
 var pos = 0;
 var w = 0, h = 0;
+let futureBook;
 let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp;
+let val1 = 1, val2 = 0, val3 = 0, val4 = 0;
 
 // const lfo = new LFO(0, 1, 200);
 function preload(){
@@ -39,6 +41,7 @@ function preload(){
   soundIceBowl = loadSound('assets/iceBowl.mp3');
   soundPnoMel = loadSound('assets/icePnoMel.mp3');
   soundIceSynArp = loadSound('assets/iceSynArp.mp3');
+  futureBook = loadFont('assets/futura_book.otf');
 }
 
 function setup() {
@@ -52,6 +55,8 @@ function setup() {
   //socket = io({transports: ['websocket'], upgrade: false});
   socket = io.connect(url);
   // socket = io.connect('http://127.0.0.1:3000');
+
+  textFont(futureBook);
 
   let params = getURLParams();
   id = params.id;
@@ -103,11 +108,23 @@ function setup() {
 
     if(msg.includes("/pixelValIn")){
       pixelVal = parseFloat(msg[1]);
+      val1 = pixelVal;
       if(scene == 6){
         lfo3.freq(idRandom * 3 * pixelVal, 0.1);
       }
     }
-    if(msg.includes("/synth")){
+
+    else if(msg.includes("/val1")){
+      val1 = parseFloat(msg[1]);
+    }
+    else if(msg.includes("/val2")){
+      val2 = parseFloat(msg[1]);
+    }
+    else if(msg.includes("/val3")){
+      val3 = parseFloat(msg[1]);
+    }
+
+    else if(msg.includes("/synth")){
       voiceNum = msg[1];
 
       if (voiceNum == voiceID){
@@ -117,33 +134,29 @@ function setup() {
         lfo2.start();
         lfo3.start();
 
-        if(soundIceSynArp.isPlaying()){
-          soundIceSynArp.stop();
-        }else{
-          soundIceSynArp.play();
-        }
       }
 
     }
-    if(msg.includes("/filterFreq")){
+    else if(msg.includes("/filterFreq")){
       filterFreqNew = map(msg[1], 0, 1, 40, 5000);
     }
-    if(msg.includes("/lfo1")){
+    else if(msg.includes("/lfo1")){
       lfo1Freq = map(msg[1], 0.01, 1, 0, 20);
       lfo1Amnt = map(msg[2], 0, 1, 0, 10);
       lfo1.freq(lfo1Freq, 0.01);
       lfo1.amp(lfo1Amnt, 0.01);
     }
-    if(msg.includes("/lfo2")){
+    else if(msg.includes("/lfo2")){
       lfo2Freq = map(msg[1], 0.01, 1, 0.001, 30);
       lfo2Amnt = map(msg[2], 0, 1, 0, 500);
       lfo2.freq(lfo2Freq, 0.01);
       lfo2.amp(lfo2Amnt, 0.01);
+
     }
-    if(msg.includes("/scene")){
+    else if(msg.includes("/scene")){
       scene = msg[1];
     }
-    if(msg.includes("/reset")){
+    else if(msg.includes("/reset")){
       timeStamp = millis();
       lauf = 0;
 
@@ -159,15 +172,27 @@ function setup() {
         soundSnow.play();
         soundSnow.loop();
       }
+      if(soundIceSynArp.isPlaying()){
+        soundIceSynArp.stop();
+      }else{
+        soundIceSynArp.play();
+        soundIceSynArp.loop();
+      }
 
     }
-    if(msg.includes("/random")){
+    else if(msg.includes("/random")){
       idRandom = random();
       timeStamp = millis() + idRandom * 1000;
       lfo3.freq(idRandom * 3 * pixelVal, 0.1);
       lauf = 0;
+      if(soundIceBowl.isPlaying()){
+        soundIceBowl.stop();
+      }else{
+        soundIceBowl.play();
+        soundIceBowl.loop();
+      }
     }
-    if(msg.includes("/refreshPhone")){
+    else if(msg.includes("/refreshPhone")){
       location.reload();
     }
 
@@ -239,8 +264,9 @@ function draw() {
         break;
 
       case 6:
+        bDrawText = false;
         // noise:
-        brightness = sin(time * 0.005 * (pixelVal+0.01) * id + idRandom) + noise(time * pixelVal / 1000);
+        brightness = sin(time * 0.002 * (pixelVal + 0.05) * id + idRandom) + noise(time * 0.1 * pixelVal / 1000);
         background(brightness*255);
         break;
 
@@ -259,42 +285,70 @@ function draw() {
         rotateY(angle + time * 0.002);
         rotateX(angle + time * 0.002);
         box(200);
+        //sphere(200);
+        //torus(100, 50);
+
         pop();
         pop();
         break;
 
+      case 8:
+        //background(pixelVal*255);
+        if(val2 > 0.1){
+          background(pixelVal*255);
+        }
+        push();
+        strokeWeight(pixelVal * 150 + 1);
+        translate(-width/2, - height/2, 0 );
+        stroke(random(255), random(255), random(255));
+        line(random(width), random(height), random(width), random(height));
+        pop();
+        break;
+
+      case 9:
+        if(val3 > 0.1){
+          background(0);
+        }
+
+        push();
+        translate(-width/2, - height/2, 0 );
+        stroke(255);
+        let speed = val1 * 2 + 1;
+        w = 200 * val2;
+        for (let y = 0; y<height; y += 20){
+          strokeWeight(sin(time * 0.005 * 1.5 + y) * pixelVal * 40 + 2 );
+          line(w * sin(time * 0.01 * 1.5 + y), y, width - w * sin(time*0.01+y), y);
+        }
+
+        pop();
+        bDrawWave = true;
+        break;
+
+
     }
-
-
-
 
 
     if (bDrawText){//(bDrawText){
       // display variables
       // fill(0);
       fill(255,0,0);
-      //translate(-100, 0,0);
+      translate(-width/2, -height/2, 0);
       push();
       text("ID: " + id, 10, 70);
       text("voiceID: " + voiceID, 10, 90);
       text("time " + time, 10, 110);
       text("second " + second(), 10, 130);
-      //text("osc " + osc.getAmp(), 10, 70);
-      // text("windowHeight " + windowHeight, 10, 70);
-      // text("windowWidth " + windowWidth, 10, 90);
 
-      text("idX " + idX, 10, 150);
-      text("idY " + idY, 10, 170);
-
-      // textSize(48);
-      // fill(255,0,0);
-      // text("Phone!!", 25, 200);
       textSize(15);
-      text("PixelVal "  + pixelVal, 15, 250);
+      text("val1 "  + val1, 15, 150);
+      text("val2 "  + val2, 15, 170);
+      text("val3 "  + val3, 15, 190);
+      text("val4 "  + val4, 15, 210);
+
+      textSize(40);
+      text("idX " + idX + "  idY " + idY, 10, 250);
       textSize(100);
       text(id, 15, 400);
-      textSize(80);
-      text("Hallo Evi", 15, 600);
 
       pop();
       textSize(15);
@@ -322,11 +376,6 @@ function draw() {
     filterFreq = constrain(filterFreq, 20, 22050);
     filter.freq(filterFreq);
     filter.freq(lfo2);
-
-    //LFO
-    // const n = lfo.run();
-    // fill(255,0,0);
-    // text(n, 10, 40);
 
 
 // Draw stuff:
