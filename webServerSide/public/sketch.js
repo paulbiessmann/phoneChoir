@@ -34,6 +34,8 @@ var w = 0, h = 0;
 let futureBook;
 let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp;
 let val1 = 1, val2 = 0, val3 = 0, val4 = 0;
+let gifEye, gifEye2, gifBug, gifForest;
+let flash = 0;
 
 // const lfo = new LFO(0, 1, 200);
 function preload(){
@@ -42,6 +44,10 @@ function preload(){
   soundPnoMel = loadSound('assets/icePnoMel.mp3');
   soundIceSynArp = loadSound('assets/iceSynArp.mp3');
   futureBook = loadFont('assets/futura_book.otf');
+  gifEye = loadImage('assets/EyeSmall.gif');
+  gifBug = loadImage('assets/BugSmall.gif');
+  gifForest = loadImage('assets/ForestSmall.gif');
+
 }
 
 function setup() {
@@ -57,6 +63,14 @@ function setup() {
   // socket = io.connect('http://127.0.0.1:3000');
 
   textFont(futureBook);
+
+  let huaweiWidth = 360;
+  let huaweiHeight = 792;
+  gifEye.resize(huaweiWidth*2, huaweiHeight*2);
+  gifForest.resize(huaweiWidth, huaweiHeight);
+  gifBug.resize(huaweiWidth, huaweiHeight);
+
+
 
   let params = getURLParams();
   id = params.id;
@@ -124,6 +138,10 @@ function setup() {
       val3 = parseFloat(msg[1]);
     }
 
+    else if(msg.includes("/flash")){
+      flash = 255;
+    }
+
     else if(msg.includes("/synth")){
       voiceNum = msg[1];
 
@@ -179,6 +197,10 @@ function setup() {
         soundIceSynArp.loop();
       }
 
+      gifForest.setFrame(0);
+      gifBug.setFrame(0);
+      gifEye.setFrame(0);
+
     }
     else if(msg.includes("/random")){
       idRandom = random();
@@ -191,9 +213,17 @@ function setup() {
         soundIceBowl.play();
         soundIceBowl.loop();
       }
+
+      gifForest.setFrame(id * 10);
+      gifBug.setFrame(idR * 10);
+      gifEye.setFrame(id * 10);
     }
     else if(msg.includes("/refreshPhone")){
       location.reload();
+    }
+    else if(msg.includes("/randomScene")){
+      idRandom = random();
+      scene = int(idRandom * 15);
     }
 
   });
@@ -218,11 +248,14 @@ function draw() {
       lfo3.amp(0);
     }
 
+    if(flash > 0.1){
+      flash *= 0.95;
+    }
 
     switch(visual){
 
       case 0:
-        background(pixelVal*255);
+        background(pixelVal*255 + flash);
         bDrawWave = false;
         bDrawText = false;
         break;
@@ -231,19 +264,19 @@ function draw() {
         // Corner to corner:
         brightness = sin(time * 0.05 * pixelVal + (id-3) / visSize);
         //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
-        background(brightness*255, pixelVal*255, pixelVal*255);
+        background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 2:
       // right to left:
         brightness = cos(time * 0.05 * pixelVal + ((id-4) % visSize));
-        background(brightness*255, pixelVal*255, pixelVal*255);
+        background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 3:
       // left to right:
         brightness = cos(time * 0.05 * pixelVal + visSize - ((id-4) % visSize));
-        background(brightness*255, pixelVal*255, pixelVal*255);
+        background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 4:
@@ -251,13 +284,13 @@ function draw() {
         brightness = cos(time * 0.05 * pixelVal  * ((idX-2) + (idY-2)));
         // lauflicht kreis?
         //brightness = sin(time * 0.05 * pixelVal  * (idX-2) + (idY-2));
-        background(brightness*255, pixelVal*255, pixelVal*255);
+        background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 5:
         // black:
         brightness = 0.0;
-        background(pixelVal*255 , pixelVal*255, pixelVal*255);
+        background(pixelVal*255+ flash , pixelVal*255+ flash, pixelVal*255+ flash);
         //background(brightness*255, brightness*255, brightness*255);
         bDrawWave = false;
         bDrawText = true;
@@ -267,12 +300,12 @@ function draw() {
         bDrawText = false;
         // noise:
         brightness = sin(time * 0.002 * (pixelVal + 0.05) * id + idRandom) + noise(time * 0.1 * pixelVal / 1000);
-        background(brightness*255);
+        background(brightness*255+ flash);
         break;
 
       case 7:
         // squares
-        background(pixelVal*255);
+        background(pixelVal*255+ flash);
         bDrawText = false;
         push();
         translate(0,0, pixelVal * 500);
@@ -292,10 +325,10 @@ function draw() {
         pop();
         break;
 
-      case 8:
+      case 8:  // Bunte Lines
         //background(pixelVal*255);
         if(val2 > 0.1){
-          background(pixelVal*255);
+          background(pixelVal*255 + flash);
         }
         push();
         strokeWeight(pixelVal * 150 + 1);
@@ -303,13 +336,13 @@ function draw() {
         stroke(random(255), random(255), random(255));
         line(random(width), random(height), random(width), random(height));
         pop();
+        bDrawWave = false;
         break;
 
       case 9:
         if(val3 > 0.1){
           background(0);
         }
-
         push();
         translate(-width/2, - height/2, 0 );
         stroke(255);
@@ -319,12 +352,50 @@ function draw() {
           strokeWeight(sin(time * 0.005 * 1.5 + y) * pixelVal * 40 + 2 );
           line(w * sin(time * 0.01 * 1.5 + y), y, width - w * sin(time*0.01+y), y);
         }
-
         pop();
         bDrawWave = true;
         break;
 
+      case 10:
+        bDrawWave = false;
+        background(0);
+        push();
+        translate(-width/2, -height/2);
+        image(gifBug, 0, 0);
+        pop();
+        break;
 
+      case 11:
+        bDrawWave = false;
+        background(0);
+        push();
+        translate(-width, -height);
+        image(gifEye, 0, 0);
+        pop();
+        break;
+
+      case 12:
+        bDrawWave = false;
+        background(0);
+        push();
+        translate(-width/2, -height/2);
+        image(gifForest, 0, 0);
+        pop();
+        break;
+
+      case 13: // texts
+        background(0);
+        bDrawWave = false;
+        bDrawText = false;
+        push();
+        translate(-width/2, -height/2);
+        fill(0, 255,0);
+        textSize(20);
+        for (let i=0; i<height; i+=20){
+          text(random(), random(10), i);
+        }
+        pop();
+        break;
     }
 
 
@@ -332,8 +403,8 @@ function draw() {
       // display variables
       // fill(0);
       fill(255,0,0);
-      translate(-width/2, -height/2, 0);
       push();
+      translate(-width/2, -height/2, 0);
       text("ID: " + id, 10, 70);
       text("voiceID: " + voiceID, 10, 90);
       text("time " + time, 10, 110);
@@ -344,6 +415,8 @@ function draw() {
       text("val2 "  + val2, 15, 170);
       text("val3 "  + val3, 15, 190);
       text("val4 "  + val4, 15, 210);
+
+      text("width "+ width + " height " + height, 15, 300);
 
       textSize(40);
       text("idX " + idX + "  idY " + idY, 10, 250);
