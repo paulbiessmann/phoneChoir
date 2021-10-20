@@ -12,7 +12,6 @@ let volume = 0.0;
 var pixelVal = 0.0;
 var pixelValRcv = 0.0;
 let id = 0, idX = 0, idY = 0;
-let visSize = 5;
 var time = 0, timeStamp = 0, gMillis = 0;
 var voiceID = 0;
 var msg;
@@ -23,19 +22,22 @@ var lfo1Freq = 0, lfo1Amnt = 0;
 var lfo2Freq = 0, lfo2Amnt = 0;
 var lauf = 0, brightness;
 let fft;
-var scene = 5;
+var scene = 6;
 var bDrawWave = true;
 var idRandom;
-var voices = 5;
+let visSize = 5;
+var voices = 4;
 var bDrawText = false;
 var angle = 0;
 var pos = 0;
 var w = 0, h = 0;
 let futureBook;
-let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp;
+let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp, soundPills;
+let bPlaySnow = 0, bPlayBowl = 0, bPlayIceArp = 0, bPlayPills = 0, bPlayIceMelo = 0;
 let val1 = 1, val2 = 0, val3 = 0, val4 = 0;
 let gifEye, gifEye2, gifBug, gifForest;
 let flash = 0;
+let frameCount = 0;
 
 // const lfo = new LFO(0, 1, 200);
 function preload(){
@@ -43,8 +45,9 @@ function preload(){
   soundIceBowl = loadSound('assets/iceBowl.mp3');
   soundPnoMel = loadSound('assets/icePnoMel.mp3');
   soundIceSynArp = loadSound('assets/iceSynArp.mp3');
+  soundPills = loadSound('assets/PillsSounds.mp3');
   futureBook = loadFont('assets/futura_book.otf');
-  gifEye = loadImage('assets/EyeSmall.gif');
+  gifEye = loadImage('assets/EyeWideSmall.gif');
   gifBug = loadImage('assets/BugSmall.gif');
   gifForest = loadImage('assets/ForestSmall.gif');
 
@@ -52,6 +55,7 @@ function preload(){
 
 function setup() {
   idRandom = random();
+  frameCount = 0;
 
   createCanvas(windowWidth, windowHeight, WEBGL);
    let url = 'http://192.168.0.100:3000';
@@ -66,7 +70,7 @@ function setup() {
 
   let huaweiWidth = 360;
   let huaweiHeight = 792;
-  gifEye.resize(huaweiWidth*2, huaweiHeight*2);
+  gifEye.resize(huaweiWidth, huaweiHeight);
   gifForest.resize(huaweiWidth, huaweiHeight);
   gifBug.resize(huaweiWidth, huaweiHeight);
 
@@ -82,7 +86,7 @@ function setup() {
   filter = new p5.LowPass;
   lfo1 = new p5.Oscillator();
   lfo2 = new p5.Oscillator();
-  lfo3 = new p5.Oscillator('sawtooth');
+  lfo3 = new p5.Oscillator('square');
   fft = new p5.FFT();
 
   lfo1.disconnect();
@@ -95,11 +99,13 @@ function setup() {
   soundPnoMel.disconnect();
   soundIceBowl.disconnect();
   soundIceSynArp.disconnect();
+  soundPills.disconnect();
 
   soundSnow.connect(filter);
   soundPnoMel.connect(filter);
   soundIceBowl.connect(filter);
   soundIceSynArp.connect(filter);
+  soundPills.connect(filter);
 
   filter.freq(filterFreq);
   filter.res(5);
@@ -122,9 +128,11 @@ function setup() {
 
     if(msg.includes("/pixelValIn")){
       pixelVal = parseFloat(msg[1]);
-      val1 = pixelVal;
       if(scene == 6){
-        lfo3.freq(idRandom * 3 * pixelVal, 0.1);
+        lfo3.freq(idRandom * 3 * pixelVal +
+          0.1, 0.1);
+        //lfo3.start();
+
       }
     }
 
@@ -174,32 +182,62 @@ function setup() {
     else if(msg.includes("/scene")){
       scene = msg[1];
     }
-    else if(msg.includes("/reset")){
-      timeStamp = millis();
-      lauf = 0;
-
-      if(soundPnoMel.isPlaying()){
+    else if(msg.includes("/playPills")){
+      bPlayPills = msg[1];
+      if(bPlayPills == 0){
+        soundPills.stop();
+      }else{
+        soundPills.play();
+        soundPills.loop();
+        soundPills.jump(idRandom * 30);
+      }
+    }
+    else if(msg.includes("/playIceMelo")){
+      bPlayIceMelo = msg[1];
+      if(bPlayIceMelo == 0){
         soundPnoMel.stop();
       }else{
         soundPnoMel.play();
         soundPnoMel.loop();
       }
-      if(soundSnow.isPlaying()){
-        soundSnow.stop();
-      }else{
-        soundSnow.play();
-        soundSnow.loop();
-      }
-      if(soundIceSynArp.isPlaying()){
+    }
+    else if(msg.includes("/playIceArp")){
+      bPlayIceArp = msg[1];
+      if(bPlayIceArp == 0){
         soundIceSynArp.stop();
       }else{
         soundIceSynArp.play();
         soundIceSynArp.loop();
       }
+    }
+    else if(msg.includes("/playBowl")){
+      bPlayBowl = msg[1];
+      if(bPlayBowl == 0){
+        soundIceBowl.stop();
+      }else{
+        soundIceBowl.play();
+        soundIceBowl.loop();
+      }
+    }
+    else if(msg.includes("/playSnow")){
+      bPlaySnow = msg[1];
+      if(bPlaySnow == 0){
+        soundSnow.stop();
+      }else{
+        soundSnow.play();
+        soundSnow.loop();
+        soundSnow.setVolume(0.4);
+      }
+    }
+    else if(msg.includes("/reset")){
+      timeStamp = millis();
+      lauf = 0;
 
       gifForest.setFrame(0);
       gifBug.setFrame(0);
       gifEye.setFrame(0);
+
+      frameCount = 0;
 
     }
     else if(msg.includes("/random")){
@@ -207,16 +245,10 @@ function setup() {
       timeStamp = millis() + idRandom * 1000;
       lfo3.freq(idRandom * 3 * pixelVal, 0.1);
       lauf = 0;
-      if(soundIceBowl.isPlaying()){
-        soundIceBowl.stop();
-      }else{
-        soundIceBowl.play();
-        soundIceBowl.loop();
-      }
 
-      gifForest.setFrame(id * 10);
-      gifBug.setFrame(idR * 10);
-      gifEye.setFrame(id * 10);
+      gifForest.setFrame(idRandom * 10);
+      gifBug.setFrame(idRandom * 10);
+      gifEye.setFrame(idRandom * 10);
     }
     else if(msg.includes("/refreshPhone")){
       location.reload();
@@ -242,6 +274,8 @@ function draw() {
     //background(pixelVal*255*sin(lfo))
     //brightness = pixelVal; // sin(pixelVal * 10 + id / 9);
 
+    let speed = val1 * 2 + 1;
+
     let visual = scene;
     bDrawWave = true;
     if(visual != 6){
@@ -262,32 +296,40 @@ function draw() {
 
       case 1:
         // Corner to corner:
-        brightness = sin(time * 0.05 * pixelVal + (id-3) / visSize);
+        brightness = sin(time * 0.05 * val1 + (id-3) / visSize);
         //brightness =sin(time * 0.01  + pixelVal * 10 + (id-3) / 3);
         background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 2:
       // right to left:
-        brightness = cos(time * 0.05 * pixelVal + ((id-4) % visSize));
+        brightness = cos(time * 0.05 * val1 + ((id-4) % visSize));
         background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 3:
       // left to right:
-        brightness = cos(time * 0.05 * pixelVal + visSize - ((id-4) % visSize));
+        brightness = cos(time * 0.05 * val1 + visSize - ((id-4) % visSize));
         background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 4:
-      // ring:
-        brightness = cos(time * 0.05 * pixelVal  * ((idX-2) + (idY-2)));
+      // schräg:
+        //brightness = sq(cos(time * 0.05 * val1  + idX + idY)) ;
+        brightness = cos(time * 0.05 * val1  + idX + idY) ;
         // lauflicht kreis?
         //brightness = sin(time * 0.05 * pixelVal  * (idX-2) + (idY-2));
         background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
         break;
 
       case 5:
+      // schlange:
+        brightness = sq(cos(time * 0.05 * val1  + idX - 2 + idY -2)) ;
+        //brightness = sin(2 * PI * (16 * val1 / 60) * time * 0.01  ) ;
+        background(brightness*255, pixelVal*255+ flash, pixelVal*255+ flash);
+        break;
+
+      case 6:
         // black:
         brightness = 0.0;
         background(pixelVal*255+ flash , pixelVal*255+ flash, pixelVal*255+ flash);
@@ -296,14 +338,16 @@ function draw() {
         bDrawText = true;
         break;
 
-      case 6:
+      case 7: // ICE noise
         bDrawText = false;
         // noise:
-        brightness = sin(time * 0.002 * (pixelVal + 0.05) * id + idRandom) + noise(time * 0.1 * pixelVal / 1000);
-        background(brightness*255+ flash);
+        frameCount += val1 * 2;
+        //brightness = sin(time * 0.002 * (val1 + 0.05) * id + idRandom) + noise(time * 0.1 * val1 / 1000);
+        brightness = sin(frameCount * 0.02  * id + idRandom) + noise(frameCount * 0.002);
+        background(brightness*255 + flash + pixelVal*255);
         break;
 
-      case 7:
+      case 8:
         // squares
         background(pixelVal*255+ flash);
         bDrawText = false;
@@ -325,13 +369,13 @@ function draw() {
         pop();
         break;
 
-      case 8:  // Bunte Lines
+      case 9:  // Bunte Lines
         //background(pixelVal*255);
         if(val2 > 0.1){
           background(pixelVal*255 + flash);
         }
         push();
-        strokeWeight(pixelVal * 150 + 1);
+        strokeWeight(val1 * 150 + 1);
         translate(-width/2, - height/2, 0 );
         stroke(random(255), random(255), random(255));
         line(random(width), random(height), random(width), random(height));
@@ -339,16 +383,15 @@ function draw() {
         bDrawWave = false;
         break;
 
-      case 9:
+      case 10:
         if(val3 > 0.1){
           background(0);
         }
         push();
         translate(-width/2, - height/2, 0 );
         stroke(255);
-        let speed = val1 * 2 + 1;
         w = 200 * val2;
-        for (let y = 0; y<height; y += 20){
+        for (let y = 0; y<height; y += 30){
           strokeWeight(sin(time * 0.005 * 1.5 + y) * pixelVal * 40 + 2 );
           line(w * sin(time * 0.01 * 1.5 + y), y, width - w * sin(time*0.01+y), y);
         }
@@ -356,7 +399,23 @@ function draw() {
         bDrawWave = true;
         break;
 
-      case 10:
+      case 11:
+        if(val3 > 0.1){
+          background(0);
+        }
+        push();
+        translate(-width/2, - height/2, 0 );
+        stroke(255);
+        w = 200 * val2;
+        for (let y = 0; y<width; y += 30){
+          strokeWeight(sin(time * 0.005 * 1.5 + y) * pixelVal * 40 + 2 );
+          line(y, w * sin(time * 0.01 * 1.5 + y), y, height - w * sin(time*0.01+y));
+        }
+        pop();
+        bDrawWave = true;
+        break;
+
+      case 12: // bugs
         bDrawWave = false;
         background(0);
         push();
@@ -365,16 +424,16 @@ function draw() {
         pop();
         break;
 
-      case 11:
+      case 13: // Eyes
         bDrawWave = false;
         background(0);
         push();
-        translate(-width, -height);
+        translate(-width/2, -height/2);
         image(gifEye, 0, 0);
         pop();
         break;
 
-      case 12:
+      case 14:  // Forest
         bDrawWave = false;
         background(0);
         push();
@@ -383,7 +442,7 @@ function draw() {
         pop();
         break;
 
-      case 13: // texts
+      case 15: // texts
         background(0);
         bDrawWave = false;
         bDrawText = false;
@@ -406,6 +465,7 @@ function draw() {
       push();
       translate(-width/2, -height/2, 0);
       text("ID: " + id, 10, 70);
+      text("ID Random: " + round(idRandom, 3), 70, 70);
       text("voiceID: " + voiceID, 10, 90);
       text("time " + time, 10, 110);
       text("second " + second(), 10, 130);
@@ -429,6 +489,17 @@ function draw() {
 
 // Sound
 
+  // Playback sounds
+  if(bPlayPills == 1){
+
+    if(id > val1*128){
+      soundPills.setVolume(0.0);
+    }
+    else{
+      soundPills.setVolume(1.3);
+    }
+  }
+
   //console.log("filterFreq " + filterFreq);
 
     osc.amp(volume/127,0.1);
@@ -437,7 +508,7 @@ function draw() {
 
 
     switch (scene){
-      case 6:
+      case 6: // ICE
         filter.freq(lfo3);
         lfo3.amp(0.9);
         osc.amp(lfo3);
@@ -538,6 +609,10 @@ function mousePressed() {
 
 function windowResized(){
   resizeCanvas(windowWidth, windowHeight);
+
+  gifEye.resize(windowWidth, windowHeight);
+  gifForest.resize(windowWidth, windowHeight);
+  gifBug.resize(windowWidth, windowHeight);
 }
 
 function leaky(oldVal, newVal, coeff){
