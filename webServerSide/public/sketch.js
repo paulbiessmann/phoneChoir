@@ -33,7 +33,11 @@ var pos = 0;
 var w = 0, h = 0;
 let futureBook;
 let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp, soundPills;
+let soundFieldPno1, soundFieldPno2;
+var amp;
+var volhistory = [];
 let bPlaySnow = 0, bPlayBowl = 0, bPlayIceArp = 0, bPlayPills = 0, bPlayIceMelo = 0;
+let bPlaySynthField = 0;
 let val1 = 1, val2 = 0, val3 = 0, val4 = 0;
 let gifEye, gifEye2, gifBug, gifForest;
 let flash = 0;
@@ -46,6 +50,8 @@ function preload(){
   soundPnoMel = loadSound('assets/icePnoMel.mp3');
   soundIceSynArp = loadSound('assets/iceSynArp.mp3');
   soundPills = loadSound('assets/PillsSounds.mp3');
+  soundFieldPno1 = loadSound('assets/SynthField_Piano1.mp3');
+  soundFieldPno2 = loadSound('assets/SynthField_Piano2.mp3');
   futureBook = loadFont('assets/futura_book.otf');
   gifEye = loadImage('assets/EyeWideSmall.gif');
   gifBug = loadImage('assets/BugSmall.gif');
@@ -88,6 +94,7 @@ function setup() {
   lfo2 = new p5.Oscillator();
   lfo3 = new p5.Oscillator('square');
   fft = new p5.FFT();
+  amp = new p5.Amplitude();
 
   lfo1.disconnect();
   lfo2.disconnect();
@@ -100,12 +107,16 @@ function setup() {
   soundIceBowl.disconnect();
   soundIceSynArp.disconnect();
   soundPills.disconnect();
+  soundFieldPno1.disconnect();
+  soundFieldPno2.disconnect();
 
   soundSnow.connect(filter);
   soundPnoMel.connect(filter);
   soundIceBowl.connect(filter);
   soundIceSynArp.connect(filter);
   soundPills.connect(filter);
+  soundFieldPno1.connect(filter);
+  soundFieldPno2.connect(filter);
 
   filter.freq(filterFreq);
   filter.res(5);
@@ -181,6 +192,13 @@ function setup() {
     }
     else if(msg.includes("/scene")){
       scene = msg[1];
+      // if(scene == 12){
+      //   angleMode(DEGREES);
+      //
+      // }else{
+      //   angleMode(RADIANS);
+      // }
+
     }
     else if(msg.includes("/playPills")){
       bPlayPills = msg[1];
@@ -227,6 +245,25 @@ function setup() {
         soundSnow.play();
         soundSnow.loop();
         soundSnow.setVolume(0.4);
+      }
+    }
+    else if(msg.includes("/playSynthField")){
+      bPlaySynthField = msg[1];
+      if(id % 2 == 0){
+        if(bPlaySynthField == 0){
+          soundFieldPno1.stop();
+        }else{
+          soundFieldPno1.play();
+          soundFieldPno1.loop();
+        }
+      }
+      else{
+        if(bPlaySynthField == 0){
+          soundFieldPno2.stop();
+        }else{
+          soundFieldPno2.play();
+          soundFieldPno2.loop();
+        }
       }
     }
     else if(msg.includes("/reset")){
@@ -352,7 +389,7 @@ function draw() {
         background(pixelVal*255+ flash);
         bDrawText = false;
         push();
-        translate(0,0, pixelVal * 500);
+        translate(0,0, val1 * 500);
 
         // rectMode(CENTER);
         stroke(255);
@@ -361,10 +398,14 @@ function draw() {
         push();
         rotateY(angle + time * 0.002);
         rotateX(angle + time * 0.002);
-        box(200);
-        //sphere(200);
-        //torus(100, 50);
-
+        if(val2 < 0.3){
+          box(200);
+        }else if(val2 < 0.6){
+          sphere(150);
+        }
+        else{
+          torus(100, val3 * 50 +2);
+        }
         pop();
         pop();
         break;
@@ -383,12 +424,13 @@ function draw() {
         bDrawWave = false;
         break;
 
-      case 10:
+      case 10: // Bar Code 1
         if(val3 > 0.1){
           background(0);
         }
         push();
         translate(-width/2, - height/2, 0 );
+        rotateY(-val1);
         stroke(255);
         w = 200 * val2;
         for (let y = 0; y<height; y += 30){
@@ -399,15 +441,16 @@ function draw() {
         bDrawWave = true;
         break;
 
-      case 11:
+      case 11: // Barcode 2
         if(val3 > 0.1){
           background(0);
         }
         push();
+        rotateZ(val1*PI);
         translate(-width/2, - height/2, 0 );
         stroke(255);
         w = 200 * val2;
-        for (let y = 0; y<width; y += 30){
+        for (let y = -200; y<height; y += 30){
           strokeWeight(sin(time * 0.005 * 1.5 + y) * pixelVal * 40 + 2 );
           line(y, w * sin(time * 0.01 * 1.5 + y), y, height - w * sin(time*0.01+y));
         }
@@ -415,7 +458,45 @@ function draw() {
         bDrawWave = true;
         break;
 
-      case 12: // bugs
+      case 12: // pills Circle
+        var vol = amp.getLevel();
+        volhistory.push(vol);
+        stroke(20);
+        push();
+
+        if(val2 > 0.1){
+          background(0, vol * 50 * 255, pixelVal * 255);
+
+          fill(255,0,0);
+          beginShape();
+          for (var i = 0; i < 360; i++) {
+            var r = map(volhistory[i], 0, 1, 20, 1000);
+            var x = r * cos(i*PI / 180);
+            var y = r * sin(i*PI / 180);
+            vertex(x, y);
+          }
+          endShape();
+        }
+        if (vol > 0.001){
+          //background(0);
+          push();
+          translate(-width/2, - height/2);
+          fill(random( 255),random( 255),random(255));
+          circle(random(width), random(height), 10+ vol*2000);
+          pop();
+        }
+        pop();
+        if (volhistory.length > 360) {
+          volhistory.splice(0, 1);
+        }
+        if(val3 < 0.1){
+          bDrawWave = false;
+        }else{
+          bDrawWave = true;
+        }
+        break;
+
+      case 13: // bugs
         bDrawWave = false;
         background(0);
         push();
@@ -424,7 +505,7 @@ function draw() {
         pop();
         break;
 
-      case 13: // Eyes
+      case 14: // Eyes
         bDrawWave = false;
         background(0);
         push();
@@ -433,7 +514,7 @@ function draw() {
         pop();
         break;
 
-      case 14:  // Forest
+      case 15:  // Forest
         bDrawWave = false;
         background(0);
         push();
@@ -442,7 +523,7 @@ function draw() {
         pop();
         break;
 
-      case 15: // texts
+      case 16: // texts
         background(0);
         bDrawWave = false;
         bDrawText = false;
@@ -496,19 +577,19 @@ function draw() {
       soundPills.setVolume(0.0);
     }
     else{
-      soundPills.setVolume(1.3);
+      soundPills.setVolume(0.8);
     }
   }
 
   //console.log("filterFreq " + filterFreq);
 
-    osc.amp(volume/127,0.1);
+    osc.amp(volume/190,0.1); //eigentlich /127
     osc.freq(freq, 0.01);
     osc.freq(lfo1);
 
 
     switch (scene){
-      case 6: // ICE
+      case 7: // ICE
         filter.freq(lfo3);
         lfo3.amp(0.9);
         osc.amp(lfo3);
