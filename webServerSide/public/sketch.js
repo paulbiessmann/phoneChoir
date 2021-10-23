@@ -85,8 +85,8 @@ function setup() {
   let params = getURLParams();
   id = params.id;
   voiceID = ((id-1)%voices)+1;
-  idX = ((id - 4) % visSize) +1;
-  idY = ceil((id - 3) / visSize);
+  idX = ((id - 1) % visSize) +1;
+  idY = ceil((id) / visSize);
 
   osc = new p5.Oscillator('sawtooth');
   filter = new p5.LowPass;
@@ -142,7 +142,7 @@ function setup() {
       if(scene == 6){
         lfo3.freq(idRandom * 3 * pixelVal +
           0.1, 0.1);
-        //lfo3.start();
+        lfo3.start();
 
       }
     }
@@ -281,6 +281,7 @@ function setup() {
       idRandom = random();
       timeStamp = millis() + idRandom * 1000;
       lfo3.freq(idRandom * 3 * pixelVal, 0.1);
+      lfo3.start();
       lauf = 0;
 
       gifForest.setFrame(idRandom * 10);
@@ -378,9 +379,9 @@ function draw() {
       case 7: // ICE noise
         bDrawText = false;
         // noise:
-        frameCount += val1 * 2;
+        frameCount += val1 * 5;
         //brightness = sin(time * 0.002 * (val1 + 0.05) * id + idRandom) + noise(time * 0.1 * val1 / 1000);
-        brightness = sin(frameCount * 0.02  * id + idRandom) + noise(frameCount * 0.002);
+        brightness = sin(frameCount * 0.1  + idRandom * 10) + noise(frameCount * 0.02);
         background(brightness*255 + flash + pixelVal*255);
         break;
 
