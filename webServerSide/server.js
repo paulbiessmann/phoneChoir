@@ -21,7 +21,8 @@ var synth = 0;
 // Set up the server
 // process.env.PORT is related to deploying on heroku
 // var server = app.listen(process.env.PORT || 80, listen);
- var server = app.listen(3000, "192.168.0.100");
+ // var server = app.listen(3000, "192.168.0.100");
+  var server = app.listen(3000, "192.168.178.27");
 //var server = app.listen(3000, "127.0.0.1");
 
 // This call back just tells us that the server has started
