@@ -38,10 +38,11 @@ var amp;
 var volhistory = [];
 let bPlaySnow = 0, bPlayBowl = 0, bPlayIceArp = 0, bPlayPills = 0, bPlayIceMelo = 0;
 let bPlaySynthField = 0;
-let val1 = 1, val2 = 0, val3 = 0, val4 = 0;
+let val1 = 0.1, val2 = 0, val3 = 0, val4 = 0;
 let gifEye, gifEye2, gifBug, gifForest;
 let flash = 0;
 let frameCount = 0;
+let height, width;
 
 // const lfo = new LFO(0, 1, 200);
 function preload(){
@@ -65,6 +66,7 @@ function setup() {
 
   createCanvas(windowWidth, windowHeight, WEBGL);
    let url = 'http://192.168.0.100:3000';
+  // url = 'http://192.168.1.219';
   //let url = 'http://127.0.0.1:3000';
   // console.log("connecting",url);
   // socket = io.connect(url, {path: "/applause/socket.io"});
@@ -74,12 +76,13 @@ function setup() {
 
   textFont(futureBook);
 
-  let huaweiWidth = 360;
-  let huaweiHeight = 792;
-  gifEye.resize(huaweiWidth, huaweiHeight);
-  gifForest.resize(huaweiWidth, huaweiHeight);
-  gifBug.resize(huaweiWidth, huaweiHeight);
-
+  let xiaomiWidth = 396;
+  let xiaomiHeight = 900;
+  gifEye.resize(xiaomiWidth, xiaomiHeight);
+  gifForest.resize(xiaomiWidth, xiaomiHeight);
+  gifBug.resize(xiaomiWidth, xiaomiHeight);
+  height = windowHeight;
+  width = windowWidth;
 
 
   let params = getURLParams();
@@ -599,7 +602,7 @@ function draw() {
 
     // lerp(filterFreq, 0.0005);
     filterFreq = leaky(filterFreq, filterFreqNew, 0.82);
-    filterFreq = constrain(filterFreq, 20, 22050);
+    filterFreq = constrain(filterFreq, 90, 22050);
     filter.freq(filterFreq);
     filter.freq(lfo2);
 
@@ -625,13 +628,13 @@ function draw() {
           translate(n*10,0,  -n * 100);
           noFill();
           push();
-          translate(-windowWidth/2, -windowHeight/2, 0);
+          translate(-windowWidth/2, -(windowHeight/2)-50, 0);
           beginShape();
           stroke(0,0,255);
           strokeWeight(6);
           for (let i = 0; i < waveform.length; i++){
-            let y = map(i, 0, waveform.length, 0, height);
-            let x = map( waveform[i], -1, 1, 0, width);
+            let y = map(i, 0, waveform.length, 0, windowHeight+50);
+            let x = map( waveform[i], -1, 1, 0, windowWidth);
             vertex(x,y);
           }
           endShape();
@@ -695,6 +698,8 @@ function windowResized(){
   gifEye.resize(windowWidth, windowHeight);
   gifForest.resize(windowWidth, windowHeight);
   gifBug.resize(windowWidth, windowHeight);
+  height = windowHeight;
+  width = windowWidth;
 }
 
 function leaky(oldVal, newVal, coeff){
