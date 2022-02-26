@@ -33,16 +33,18 @@ var pos = 0;
 var w = 0, h = 0;
 let futureBook;
 let soundSnow, soundIceBowl, soundPnoMel, soundIceSynArp, soundPills;
-let soundFieldPno1, soundFieldPno2;
+let soundFieldPno1, soundFieldPno2, soundDwarfs;
 var amp;
 var volhistory = [];
 let bPlaySnow = 0, bPlayBowl = 0, bPlayIceArp = 0, bPlayPills = 0, bPlayIceMelo = 0;
-let bPlaySynthField = 0;
+let bPlaySynthField = 0, bPlayDwarfs = 0;
 let val1 = 0.1, val2 = 0, val3 = 0, val4 = 0;
 let gifEye, gifEye2, gifBug, gifForest;
 let flash = 0;
 let frameCount = 0;
 let height, width;
+var waveRect = 0;
+var timeCnt = 0;
 
 // const lfo = new LFO(0, 1, 200);
 function preload(){
@@ -53,6 +55,7 @@ function preload(){
   soundPills = loadSound('assets/PillsSounds.mp3');
   soundFieldPno1 = loadSound('assets/SynthField_Piano1.mp3');
   soundFieldPno2 = loadSound('assets/SynthField_Piano2.mp3');
+  soundDwarfs = loadSound('assets/klinke_dwarfs4.mp3');
   futureBook = loadFont('assets/futura_book.otf');
   gifEye = loadImage('assets/EyeWideSmall.gif');
   gifBug = loadImage('assets/BugSmall.gif');
@@ -112,6 +115,7 @@ function setup() {
   soundPills.disconnect();
   soundFieldPno1.disconnect();
   soundFieldPno2.disconnect();
+  soundDwarfs.disconnect();
 
   soundSnow.connect(filter);
   soundPnoMel.connect(filter);
@@ -120,6 +124,7 @@ function setup() {
   soundPills.connect(filter);
   soundFieldPno1.connect(filter);
   soundFieldPno2.connect(filter);
+  soundDwarfs.connect(filter);
 
   filter.freq(filterFreq);
   filter.res(5);
@@ -250,6 +255,17 @@ function setup() {
         soundSnow.setVolume(0.4);
       }
     }
+    else if(msg.includes("/playDwarfs")){
+      bPlayDwarfs = msg[1];
+      if(bPlayDwarfs == 0){
+        soundDwarfs.stop();
+      }else{
+        soundDwarfs.play();
+        soundDwarfs.loop();
+        soundDwarfs.jump(idRandom * 10);
+        soundDwarfs.setVolume(0.7);
+      }
+    }
     else if(msg.includes("/playSynthField")){
       bPlaySynthField = msg[1];
       if(id % 2 == 0){
@@ -278,6 +294,7 @@ function setup() {
       gifEye.setFrame(0);
 
       frameCount = 0;
+      timeCnt = 0;
 
     }
     else if(msg.includes("/random")){
@@ -540,6 +557,94 @@ function draw() {
         }
         pop();
         break;
+
+      case 17: // waves
+        background(0,0,pixelVal*255 + flash);
+        if(0){
+          brightness = cos((time * 0.01 * val1) + (val2 * 1 * idX));
+          push();
+          translate(-width/2, -height/2);
+          rect(0,0, width, height * abs(brightness) );
+          pop();
+        }
+        if(1){
+          push();
+          translate(-width/2, -height/2);
+          strokeWeight(2);
+          stroke(0);
+          fill(255,255,0);
+          timeCnt += val1 * 2 + 0.01;
+          for (let y = 0; y<height; y += 10){
+            let lineX = 0;
+            // let lineH = width * sin(time * 0.01 * val1 + y * 0.4 * val2 );
+            let lineH = width * sin(timeCnt + y * 0.4 * val2 );
+            //line(lineX, y, lineH, y);
+            rect(lineX, y, lineH, (val3 * 30) + 2);
+          }
+          pop();
+        }
+        bDrawWave = false;
+        break;
+
+      case 18:
+        var vol = amp.getLevel();
+        volhistory.push(vol);
+        stroke(20);
+        push();
+
+        if(val2 > 0.1){
+          background(0, vol * 10 * 255, pixelVal * 255);
+
+          fill(255,0,0);
+          beginShape();
+          for (var i = 0; i < 360; i++) {
+            var r = map(volhistory[i], 0, 1, 20, 1000);
+            var x = r * cos(i*PI / 180);
+            var y = r * sin(i*PI / 180);
+            vertex(x, y);
+          }
+          endShape();
+        }
+
+        if (vol > 0.001){
+          if (vol > 0.008){
+              background(0,0,vol * 40 * 255);
+          }
+          //background(0);
+          push();
+          translate(-width/2, - height/2);
+          stroke(random( 255),random( 255),random(255));
+          //noFill();
+          fill(0,0,0, 256);
+
+          strokeWeight(1+ vol*20);
+          triangle(random(width), random(height), random(width), random(height),random(width), random(height));
+          pop();
+        }
+        pop();
+        if (volhistory.length > 360) {
+          volhistory.splice(0, 1);
+        }
+        if(val3 < 0.1){
+          bDrawWave = false;
+        }else{
+          bDrawWave = true;
+        }
+        break;
+
+      case 19:
+        //timeCnt += val1 * 10 + 0.01;
+        if ( val3 > 0.5){
+          // left to right:
+          brightness = cos(time * 0.05 * val1 + visSize - ((id-4) % visSize));
+          background(pixelVal*255, 0, brightness*255);
+        }else{
+          // Corner to corner:
+          brightness = sin(time * 0.05 * val1 + (id-3) / visSize);
+          background(0, pixelVal*255, brightness*255);
+        }
+        break;
+
     }
 
 
@@ -602,9 +707,10 @@ function draw() {
 
     // lerp(filterFreq, 0.0005);
     filterFreq = leaky(filterFreq, filterFreqNew, 0.82);
-    filterFreq = constrain(filterFreq, 90, 22050);
-    filter.freq(filterFreq);
     filter.freq(lfo2);
+    filterFreq = constrain(filterFreq, 120, 22050);
+    filter.freq(filterFreq);
+
 
 
 // Draw stuff:
@@ -707,6 +813,11 @@ function leaky(oldVal, newVal, coeff){
   newVal = oldVal * (1-coeff) + newVal * coeff;
   return newVal;
 
+}
+
+function flashEvent(valIn, step){
+  var out = valIn - step;
+  return out;
 }
 
 // var elem = document.getElementsByTagName("body")[0];
