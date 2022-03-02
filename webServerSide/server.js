@@ -53,6 +53,7 @@ io.sockets.on('connection',
           socket.join('roomPhone');
           numPhones++;
           // console.log(socket.id + " added to " + socket.room + ", NumPhones: " + numPhones );
+          socket.emit('newId', numPhones);
           console.log(socket.id + " added to " + socket.room);
       }
     });

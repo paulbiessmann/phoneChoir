@@ -89,7 +89,7 @@ function setup() {
 
 
   let params = getURLParams();
-  id = params.id;
+  id = params.id - 10;
   voiceID = ((id-1)%voices)+1;
   idX = ((id - 1) % visSize) +1;
   idY = ceil((id) / visSize);
@@ -126,19 +126,24 @@ function setup() {
   soundFieldPno2.connect(filter);
   soundDwarfs.connect(filter);
 
+  lfo3.freq(0.5);
+
   filter.freq(filterFreq);
   filter.res(5);
 
   //noise = new p5.Noise();
 
-
   // say "Hi, I'm a phone"
   socket.emit('phone', 1);
 
-
-// // TODO:
-// - Anordnung der Phones quadratisch? Vll in drei Reihen besser.. 3x8
-// - Start in Fullscreen
+  socket.on('newId', function(numPhones){
+    if(isNaN(id)){
+      id = numPhones;
+      voiceID = ((id-1)%voices)+1;
+      idX = ((id - 1) % visSize) +1;
+      idY = ceil((id) / visSize);
+    }
+  });
 
 
   socket.on('message', function(msg) {
@@ -200,13 +205,6 @@ function setup() {
     }
     else if(msg.includes("/scene")){
       scene = msg[1];
-      // if(scene == 12){
-      //   angleMode(DEGREES);
-      //
-      // }else{
-      //   angleMode(RADIANS);
-      // }
-
     }
     else if(msg.includes("/playPills")){
       bPlayPills = msg[1];
